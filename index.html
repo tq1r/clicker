@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Meme Factory</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg1:#0f0a1e;--bg2:#1a0f2e;--bg3:#120826;
+  --panel:rgba(30,18,55,0.88);--border:rgba(168,85,247,0.12);--border-hi:rgba(168,85,247,0.25);
+  --text:#f0e8ff;--dim:#9b8ec4;--dimmer:#6b5f8a;
+  --clout:#4ade80;--gold:#fbbf24;--viral:#f59e0b;
+  --angel:#60a5fa;--brainrot:#f472b6;
+  --pink:#ec4899;--purple:#a855f7;--blue:#6366f1;--cyan:#22d3ee;
+  --blur:16px;
+}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Fredoka',sans-serif;color:var(--text);background:var(--bg1)}
+.hidden{display:none!important}
+
+/* === ANIMATED BACKGROUND === */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 50% 40% at 30% 60%, rgba(168,85,247,0.08), transparent 60%),
+    radial-gradient(ellipse 40% 35% at 75% 30%, rgba(236,72,153,0.06), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 50% 80%, rgba(99,102,241,0.05), transparent 50%),
+    radial-gradient(ellipse 80% 70% at 50% 50%, transparent 40%, rgba(0,0,0,0.3) 100%);
+  background-size:100% 100%;animation:bgPulse 8s ease-in-out infinite alternate;
+}
+@keyframes bgPulse{0%{opacity:.8;filter:hue-rotate(0deg)}50%{opacity:1;filter:hue-rotate(15deg)}100%{opacity:.85;filter:hue-rotate(-10deg)}}
+
+/* Floating emoji bubbles */
+.emoji-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.emoji-bubble{
+  position:absolute;bottom:-60px;font-size:24px;opacity:0;
+  animation:floatUp linear infinite;
+}
+@keyframes floatUp{
+  0%{transform:translateY(0) rotate(0deg) scale(1);opacity:0}
+  10%{opacity:.15}
+  90%{opacity:.08}
+  100%{transform:translateY(-110vh) rotate(360deg) scale(.6);opacity:0}
+}
+
+/* === ANIMATIONS === */
+@keyframes shake{0%,100%{transform:translate(0)}25%{transform:translate(-3px,1px)}50%{transform:translate(3px,-2px)}75%{transform:translate(-2px,2px)}}
+.shaking{animation:shake .1s ease}
+@keyframes megaShake{0%,100%{transform:translate(0)}20%{transform:translate(-8px,4px)}40%{transform:translate(6px,-6px)}60%{transform:translate(-5px,7px)}80%{transform:translate(9px,-3px)}}
+.mega-shaking{animation:megaShake .5s ease}
+.glass{background:var(--panel);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid var(--border);border-radius:12px}
+
+/* === SPLASH === */
+#splash{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:linear-gradient(160deg,#0f0a1e,#1a0f2e 50%,#120826)}
+#splash h1{font-size:clamp(36px,8vw,64px);font-weight:700;background:linear-gradient(135deg,var(--pink),var(--purple),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px}
+#splash .sub{font-size:clamp(13px,2vw,16px);color:var(--dim);max-width:400px;text-align:center;line-height:1.6}
+#splash .sub strong{color:var(--pink)}
+.btn-play{padding:16px 48px;border:none;border-radius:14px;cursor:pointer;background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;font-size:18px;font-weight:700;font-family:'Fredoka',sans-serif;letter-spacing:1px;box-shadow:0 4px 0 #7c2d8e,0 8px 30px rgba(168,85,247,.3);transition:all .1s;position:relative;top:0}
+.btn-play:hover{top:-2px;box-shadow:0 6px 0 #7c2d8e,0 12px 40px rgba(168,85,247,.4)}
+.btn-play:active{top:3px;box-shadow:0 1px 0 #7c2d8e,0 2px 10px rgba(168,85,247,.2)}
+
+/* === TOP BAR === */
+#top-bar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:10px;padding:8px 14px;height:50px;background:rgba(15,10,30,.92);border-bottom:1px solid var(--border)}
+.clout-display{flex:1;display:flex;align-items:baseline;gap:8px;min-width:0}
+.clout-amount{font-family:'JetBrains Mono',monospace;font-size:clamp(20px,3.5vw,30px);font-weight:700;color:var(--clout);text-shadow:0 0 18px rgba(74,222,128,.25);transition:text-shadow .3s}
+.clout-amount.flash{text-shadow:0 0 30px rgba(74,222,128,.5)}
+.clout-label{font-size:11px;color:var(--dim);font-weight:600;letter-spacing:1.5px;text-transform:uppercase}
+.cps-display{font-size:12px;color:var(--dim);white-space:nowrap}
+.cps-display span{color:var(--viral);font-weight:700;font-family:'JetBrains Mono',monospace}
+.top-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.angel-badge{display:flex;align-items:center;gap:4px;padding:4px 10px;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.12);border-radius:20px;font-size:12px;font-weight:700;color:var(--angel);font-family:'JetBrains Mono',monospace}
+
+.icon-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--dim);transition:all .15s}
+.icon-btn:hover{color:var(--text);background:rgba(255,255,255,.08)}
+
+.dropdown-container{position:relative}
+.dropdown-menu{position:absolute;top:calc(100% + 6px);right:0;min-width:190px;padding:6px;display:flex;flex-direction:column;gap:2px;opacity:0;pointer-events:none;transform:translateY(-4px);transition:all .15s;z-index:200}
+.dropdown-menu.open{opacity:1;pointer-events:all;transform:translateY(0)}
+.dropdown-menu button{display:flex;align-items:center;gap:8px;padding:8px 12px;border:none;border-radius:8px;background:none;color:var(--text);font-size:13px;cursor:pointer;text-align:left;transition:background .15s;font-family:'Fredoka',sans-serif}
+.dropdown-menu button:hover{background:rgba(255,255,255,.06)}
+
+
+/* === MAIN AREA === */
+#main-area{position:fixed;top:58px;bottom:38px;left:12px;right:320px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:1;pointer-events:none}
+
+/* === MEME BUTTON === */
+#meme-btn{
+  width:clamp(130px,22vmin,190px);height:clamp(130px,22vmin,190px);border-radius:24px;border:3px solid rgba(168,85,247,.25);cursor:pointer;pointer-events:all;
+  background:linear-gradient(145deg,#2d1b69,#1e1145 40%,#160d33);
+  box-shadow:0 0 40px rgba(168,85,247,.15),0 0 80px rgba(168,85,247,.06),inset 0 2px 8px rgba(255,255,255,.06),inset 0 -3px 8px rgba(0,0,0,.3);
+  transition:transform 50ms,box-shadow 50ms;position:relative;user-select:none;-webkit-tap-highlight-color:transparent;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;
+  animation:btnGlow 3s ease-in-out infinite;
+}
+@keyframes btnGlow{0%,100%{box-shadow:0 0 40px rgba(168,85,247,.15),0 0 80px rgba(168,85,247,.06),inset 0 2px 8px rgba(255,255,255,.06),inset 0 -3px 8px rgba(0,0,0,.3)}50%{box-shadow:0 0 50px rgba(236,72,153,.2),0 0 100px rgba(168,85,247,.1),inset 0 2px 8px rgba(255,255,255,.08),inset 0 -3px 8px rgba(0,0,0,.3)}}
+#meme-btn:hover{box-shadow:0 0 60px rgba(168,85,247,.25),0 0 100px rgba(236,72,153,.1),inset 0 2px 8px rgba(255,255,255,.1),inset 0 -3px 8px rgba(0,0,0,.3)}
+#meme-btn:active,#meme-btn.pressed{transform:scale(.95);box-shadow:0 0 20px rgba(168,85,247,.1),inset 0 3px 8px rgba(0,0,0,.4)}
+#meme-btn .btn-emoji{font-size:clamp(36px,6vmin,56px);pointer-events:none;filter:drop-shadow(0 2px 8px rgba(168,85,247,.3));transition:all .3s}
+#meme-btn .btn-label{font-size:clamp(13px,2.2vmin,17px);font-weight:700;color:rgba(255,255,255,.85);pointer-events:none;letter-spacing:1px}
+#meme-btn .btn-sub{font-size:10px;color:rgba(255,255,255,.45);pointer-events:none;font-family:'JetBrains Mono',monospace;font-weight:400}
+.click-ripple{position:absolute;inset:-8px;border-radius:28px;border:2px solid rgba(168,85,247,.3);pointer-events:none;animation:rippleOut .4s ease-out forwards}
+@keyframes rippleOut{0%{transform:scale(.9);opacity:.4}100%{transform:scale(1.8);opacity:0}}
+.float-text{position:fixed;pointer-events:none;font-weight:700;font-size:18px;font-family:'JetBrains Mono',monospace;text-shadow:0 0 8px currentColor;animation:floatUp .8s ease-out forwards;z-index:50}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-70px) scale(.6)}}
+.stats-row{display:flex;gap:16px;font-size:11px;color:var(--dim);pointer-events:none;font-family:'JetBrains Mono',monospace}
+.stats-row span{display:flex;align-items:center;gap:4px}
+.stats-row span:first-child{font-size:14px}
+
+/* === GOING VIRAL (Golden Cookie) === */
+#viral-cookie{
+  position:fixed;z-index:300;width:60px;height:60px;border-radius:50%;cursor:pointer;pointer-events:all;
+  background:radial-gradient(circle at 35% 35%,#fde68a,#f59e0b 50%,#d97706);
+  box-shadow:0 0 20px rgba(245,158,11,.5),0 0 40px rgba(245,158,11,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;animation:viralBounce 2s ease-in-out infinite,viralGlow 1s ease-in-out infinite alternate;
+  transition:transform .1s;
+}
+#viral-cookie:hover{transform:scale(1.15)}
+#viral-cookie:active{transform:scale(.9)}
+@keyframes viralBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes viralGlow{0%{box-shadow:0 0 20px rgba(245,158,11,.5),0 0 40px rgba(245,158,11,.2)}100%{box-shadow:0 0 30px rgba(245,158,11,.7),0 0 60px rgba(245,158,11,.3)}}
+
+/* === STORE === */
+#store{position:fixed;top:50px;bottom:34px;right:0;width:320px;z-index:100;display:flex;flex-direction:column;overflow:hidden;background:rgba(18,12,35,.96);border-left:1px solid var(--border)}
+#store-tabs{display:flex;gap:0;padding:6px 6px 0;flex-shrink:0;align-items:flex-end;border-bottom:1px solid var(--border)}
+.tab-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:2px;padding:7px 2px 6px;border:none;border-radius:8px 8px 0 0;background:rgba(255,255,255,.02);color:var(--dimmer);font-size:10px;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.3px;text-transform:uppercase;font-family:'Fredoka',sans-serif}
+.tab-btn span:first-child{font-size:14px}
+.tab-btn:hover{background:rgba(255,255,255,.04);color:var(--dim)}
+.tab-btn.active{background:rgba(168,85,247,.08);color:var(--purple);border:1px solid rgba(168,85,247,.15);border-bottom:1px solid transparent;margin-bottom:-1px}
+#buy-amt-group{display:flex;gap:2px;margin-left:auto;align-self:center}
+.buy-amt-btn{padding:3px 7px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--dimmer);font-size:10px;font-weight:600;cursor:pointer;transition:all .12s;font-family:'JetBrains Mono',monospace}
+.buy-amt-btn.active{background:rgba(168,85,247,.1);color:var(--purple);border-color:rgba(168,85,247,.2)}
+.buy-amt-btn:hover:not(.active){background:rgba(255,255,255,.04)}
+#store-content{flex:1;overflow-y:auto;padding:8px 10px 12px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
+#store-content::-webkit-scrollbar{width:4px}
+#store-content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+
+/* Building cards */
+.bld-card{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:10px;margin-bottom:5px;background:rgba(168,85,247,.02);border:1px solid rgba(168,85,247,.05);transition:all .2s;position:relative;overflow:hidden}
+.bld-card:hover{background:rgba(168,85,247,.04);border-color:rgba(168,85,247,.1)}
+.bld-card.affordable{border-color:rgba(74,222,128,.1)}
+.bld-card.affordable::after{content:'';position:absolute;inset:0;border-radius:10px;background:linear-gradient(90deg,transparent 60%,rgba(74,222,128,.03) 100%);pointer-events:none}
+.bld-icon{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px}
+.bld-info{flex:1;min-width:0}
+.bld-header{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.bld-name{font-size:13px;font-weight:600}
+.bld-owned{font-size:11px;color:var(--dim);font-weight:600;font-family:'JetBrains Mono',monospace}
+.bld-desc{font-size:10px;color:var(--dimmer);margin-top:1px;line-height:1.3;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bld-footer{display:flex;align-items:center;justify-content:space-between;margin-top:5px;gap:6px}
+.bld-cost{font-size:12px;font-weight:700;color:var(--clout);font-family:'JetBrains Mono',monospace}
+.bld-cps{font-size:9px;color:var(--dimmer);font-family:'JetBrains Mono',monospace}
+.btn-buy{padding:4px 12px;border:none;border-radius:7px;background:rgba(255,255,255,.06);color:var(--text);font-size:11px;font-weight:600;cursor:pointer;transition:all .12s;white-space:nowrap;font-family:'Fredoka',sans-serif}
+.btn-buy:hover:not(:disabled){background:rgba(255,255,255,.1);transform:scale(1.03)}
+.btn-buy:disabled{opacity:.2;cursor:not-allowed}
+.btn-buy.can-buy{background:rgba(74,222,128,.08);color:var(--clout);border:1px solid rgba(74,222,128,.12)}
+
+/* Upgrade cards */
+.upg-card{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:10px;margin-bottom:5px;background:rgba(168,85,247,.02);border:1px solid rgba(168,85,247,.05);transition:all .2s}
+.upg-card:hover{background:rgba(168,85,247,.04)}
+.upg-card.affordable{border-color:rgba(251,191,36,.12)}
+.upg-icon{width:34px;height:34px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px}
+
+.upg-info{flex:1;min-width:0}
+.upg-name{font-size:13px;font-weight:600}
+.upg-desc{font-size:10px;color:var(--dimmer);margin-top:2px;line-height:1.3}
+.upg-footer{display:flex;align-items:center;justify-content:space-between;margin-top:5px}
+.upg-cost{font-size:12px;font-weight:700;color:var(--clout);font-family:'JetBrains Mono',monospace}
+.angel-cost{font-size:12px;font-weight:700;color:var(--angel);font-family:'JetBrains Mono',monospace}
+.btn-upg{padding:4px 10px;border:none;border-radius:7px;background:rgba(251,191,36,.06);color:var(--gold);font-size:11px;font-weight:600;cursor:pointer;transition:all .12s;border:1px solid rgba(251,191,36,.1);font-family:'Fredoka',sans-serif}
+.btn-upg:hover:not(:disabled){background:rgba(251,191,36,.12);transform:scale(1.03)}
+.btn-upg:disabled{opacity:.2;cursor:not-allowed}
+.upg-card.angel-up{border-color:rgba(96,165,250,.08)}
+.upg-card.angel-up .btn-upg{background:rgba(96,165,250,.06);color:var(--angel);border-color:rgba(96,165,250,.1)}
+
+/* === TICKER === */
+#ticker{position:fixed;bottom:0;left:0;right:0;height:34px;z-index:100;background:rgba(15,10,30,.95);border-top:1px solid rgba(236,72,153,.15);display:flex;align-items:center;overflow:hidden}
+.ticker-label{padding:0 12px;font-size:10px;font-weight:700;color:var(--pink);letter-spacing:1.5px;white-space:nowrap;flex-shrink:0;border-right:1px solid rgba(236,72,153,.15);height:100%;display:flex;align-items:center;gap:4px;text-transform:uppercase}
+.ticker-label span:first-child{font-size:14px}
+#ticker-text{flex:1;overflow:hidden;white-space:nowrap}
+#ticker-scroll{display:inline-block;padding-left:100%;animation:tickMove 25s linear infinite;font-size:12px;color:rgba(240,232,255,.6);font-weight:500}
+@keyframes tickMove{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
+
+/* === EVENT BANNER === */
+#event-banner{position:fixed;top:54px;left:10px;right:330px;z-index:150;padding:8px 16px;display:flex;align-items:center;gap:12px;border-color:rgba(244,114,182,.2);box-shadow:0 0 20px rgba(244,114,182,.08);animation:evtPulse .8s ease-in-out infinite;font-size:12px;font-weight:600;color:var(--brainrot)}
+@keyframes evtPulse{0%,100%{opacity:.85}50%{opacity:1}}
+
+/* === VIRAL BANNER === */
+#viral-banner{position:fixed;top:100px;left:50%;transform:translateX(-50%);z-index:160;max-width:440px;width:calc(100% - 20px);padding:10px 18px;display:flex;flex-direction:column;align-items:center;gap:4px;border-color:rgba(245,158,11,.2);box-shadow:0 0 25px rgba(245,158,11,.1);font-size:12px;font-weight:700;color:var(--gold);animation:viralPop .4s cubic-bezier(.17,.67,.35,1.4);text-align:center}
+@keyframes viralPop{0%{opacity:0;transform:translateX(-50%) translateY(-16px) scale(.85)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+.viral-timer{height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;width:100%}
+.viral-timer-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .1s linear}
+
+/* === BUFF BAR === */
+#buff-bar{position:fixed;bottom:38px;left:12px;right:332px;display:flex;gap:5px;z-index:100;flex-wrap:wrap;pointer-events:none}
+.buff-pill{display:flex;align-items:center;gap:4px;padding:3px 10px;border-radius:16px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;animation:buffPop .3s ease;pointer-events:none}
+.buff-pill.positive{background:rgba(74,222,128,.08);color:var(--clout);border:1px solid rgba(74,222,128,.12)}
+.buff-pill.special{background:rgba(244,114,182,.08);color:var(--brainrot);border:1px solid rgba(244,114,182,.12)}
+.buff-pill.viral{background:rgba(245,158,11,.08);color:var(--gold);border:1px solid rgba(245,158,11,.12)}
+
+@keyframes buffPop{0%{opacity:0;transform:scale(.7)}100%{opacity:1;transform:scale(1)}}
+
+/* === TINTS === */
+#viral-tint{position:fixed;inset:0;z-index:89;pointer-events:none;transition:all .5s}
+#viral-tint.active{background:radial-gradient(ellipse at 50% 50%,rgba(245,158,11,.05),transparent 70%)}
+
+/* === PRESTIGE === */
+#prestige-overlay{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.8);animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.prestige-card{width:400px;max-width:90vw;padding:32px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.prestige-icon{font-size:48px;animation:pPulse 1.5s ease-in-out infinite}
+@keyframes pPulse{0%,100%{filter:drop-shadow(0 0 8px rgba(96,165,250,.3))}50%{filter:drop-shadow(0 0 20px rgba(96,165,250,.6))}}
+.prestige-card h2{font-size:20px;font-weight:700;color:var(--angel);letter-spacing:2px;text-transform:uppercase}
+.prestige-card p{font-size:13px;color:var(--dim);line-height:1.6}
+.stat-grid{display:flex;flex-direction:column;gap:6px;width:100%;max-width:280px}
+.stat-row{display:flex;justify-content:space-between;font-size:13px}
+.stat-label{color:var(--dim)}.stat-val{font-weight:700;font-family:'JetBrains Mono',monospace}
+.angels-earned{display:flex;align-items:center;gap:8px;padding:12px 20px;background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.12);border-radius:12px;font-size:18px;font-weight:700;color:var(--angel);font-family:'JetBrains Mono',monospace}
+.btn-prestige{padding:14px 36px;border:none;border-radius:12px;cursor:pointer;background:linear-gradient(135deg,var(--blue),#4338ca);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;box-shadow:0 4px 0 #312e81,0 8px 20px rgba(99,102,241,.25);transition:all .1s;position:relative;top:0;text-transform:uppercase;font-family:'Fredoka',sans-serif}
+.btn-prestige:hover{top:-2px;box-shadow:0 6px 0 #312e81,0 12px 30px rgba(99,102,241,.35)}
+
+/* === TOASTS === */
+.ach-toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:600;padding:10px 20px;border-radius:10px;background:rgba(18,12,35,.95);border:1px solid rgba(251,191,36,.15);display:flex;align-items:center;gap:10px;animation:toastIn .4s ease,toastOut .4s ease 2.6s forwards;font-size:13px;font-weight:600}
+.ach-toast span:first-child{font-size:20px;color:var(--gold)}
+.ach-name{color:var(--gold)}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-16px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(-50%) translateY(-16px)}}
+.toast{position:fixed;bottom:44px;left:50%;transform:translateX(-50%);z-index:600;padding:8px 18px;border-radius:10px;font-size:12px;font-weight:600;animation:toastIn .3s ease,toastOut .3s ease 1.7s forwards}
+.toast.success{background:rgba(18,12,35,.95);color:var(--clout);border:1px solid rgba(74,222,128,.12)}
+.toast.error{background:rgba(18,12,35,.95);color:var(--pink);border:1px solid rgba(236,72,153,.12)}
+#particle-canvas{position:fixed;inset:0;z-index:50;pointer-events:none}
+#flash{position:fixed;inset:0;z-index:400;pointer-events:none;opacity:0;transition:opacity .15s}
+#flash.active{opacity:1;animation:flashAnim 1.2s ease-out forwards}
+@keyframes flashAnim{0%{opacity:.7}100%{opacity:0}}
+.reset-confirm{padding:8px}.reset-confirm p{font-size:13px;margin-bottom:10px;color:var(--dim);line-height:1.5}
+.btn-row{display:flex;gap:8px;justify-content:center}
+.confirm-no{padding:6px 16px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--dim);cursor:pointer;font-size:12px;font-weight:600}
+.confirm-no:hover{color:var(--text);border-color:var(--border-hi)}
+.confirm-yes{padding:6px 16px;border:none;border-radius:8px;background:rgba(236,72,153,.1);color:var(--pink);cursor:pointer;font-size:12px;font-weight:700}
+.confirm-yes:hover{background:rgba(236,72,153,.2)}
+.mobile-store-btn{position:fixed;bottom:42px;right:10px;z-index:101;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;background:rgba(168,85,247,.15);color:var(--purple);display:none;align-items:center;justify-content:center;border:1px solid rgba(168,85,247,.2)}
+.mobile-store-btn span{font-size:22px}
+@media(max-width:800px){#main-area{right:12px;bottom:88px}#store{display:none}#store.mobile-open{display:flex;left:0;right:0;top:auto;bottom:34px;width:auto;max-height:55vh;z-index:200;border-radius:14px 14px 0 0;border:1px solid var(--border)}
+.mobile-store-btn{display:flex!important}#buff-bar{right:12px;bottom:78px}#event-banner{right:12px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Font Awesome icon sizing */
+.icon-btn i{font-size:14px}
+.bld-icon i{font-size:18px}
+.upg-icon i{font-size:15px}
+.angel-badge i{font-size:12px}
+.tab-btn i{font-size:13px}
+.ticker-label i{font-size:13px}
+.btn-emoji i{font-size:clamp(36px,6vmin,56px)}
+.ach-toast i{font-size:20px}
+#viral-cookie i{font-size:28px}
+.prestige-icon i{font-size:48px}
+</style></head><body>
+<canvas id="particle-canvas"></canvas><div id="viral-tint"></div><div id="flash" style="background:radial-gradient(circle,rgba(168,85,247,.3),transparent 70%)"></div>
+
+<div class="emoji-bg" id="emoji-bg"></div>
+
+<!-- SPLASH -->
+<div id="splash">
+  <h1>MEME FACTORY</h1>
+  <p class="sub">You are the internet\'s most powerful meme producer. Click to post memes, build your clout empire, and <strong>go viral</strong>. The algorithm awaits.</p>
+  <button class="btn-play" id="btn-play">START POSTING</button>
+</div>
+
+<!-- GAME -->
+<div id="game" class="hidden">
+  <header id="top-bar">
+    <div class="clout-display">
+      <span class="clout-amount" id="clout-amount">0</span>
+      <span class="clout-label">Clout</span>
+    </div>
+    <div class="cps-display">CPS: <span id="cps-val">0</span></div>
+    <div class="top-right">
+      <div class="angel-badge hidden" id="angel-badge"><i class="fa-solid fa-wand-magic-sparkles"></i><span id="angel-count">0</span></div>
+      <button class="icon-btn" id="btn-save" title="Save (S)"><i class="fa-solid fa-floppy-disk"></i></button>
+      <div class="dropdown-container">
+        <button class="icon-btn" id="btn-settings" title="Settings"><i class="fa-solid fa-gear"></i></button>
+        <div class="dropdown-menu glass" id="settings-menu">
+          <button id="btn-sound"><i class="fa-solid fa-volume-high"></i> Sound: On</button>
+          <button id="btn-fullscreen"><i class="fa-solid fa-expand"></i> Fullscreen</button>
+          <button id="btn-prestige-opt"><i class="fa-solid fa-rotate"></i> New Account</button>
+          <button id="btn-wipe"><i class="fa-solid fa-trash"></i> Wipe Save</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div id="event-banner" class="glass hidden"><span id="event-icon"><i class="fa-solid fa-bolt"></i></span><span id="event-text">Something happened!</span></div>
+
+  <div id="viral-banner" class="glass hidden">
+    <span id="viral-banner-icon"><i class="fa-solid fa-chart-line"></i></span>
+    <span id="viral-banner-text">You\'re going viral!</span>
+    <div class="viral-timer"><div class="viral-timer-fill" id="viral-fill"></div></div>
+  </div>
+
+  <main id="main-area">
+    <div id="meme-btn"><span class="btn-emoji" id="btn-emoji"><i class="fa-solid fa-mobile-screen"></i></span><span class="btn-label" id="btn-label">POST</span><span class="btn-sub" id="click-power-label">+1 clout / click</span></div>
+    <div class="stats-row">
+      <span><i class="fa-solid fa-hand-point-up"></i> <span id="stat-clicks">0</span> posts</span>
+      <span><i class="fa-solid fa-chart-line"></i> <span id="stat-total">0</span> total</span>
+    </div>
+  </main>
+
+  <section id="store">
+    <div id="store-tabs">
+      <button class="tab-btn active" data-tab="blds"><i class="fa-solid fa-building"></i> Meme Mills</button>
+      <button class="tab-btn" data-tab="upgs"><i class="fa-solid fa-bolt"></i> Upgrades</button>
+      <button class="tab-btn" data-tab="angels"><i class="fa-solid fa-wand-magic-sparkles"></i> Angels</button>
+      <button class="tab-btn" data-tab="awards"><i class="fa-solid fa-trophy"></i> Awards</button>
+      <div id="buy-amt-group">
+        <button class="buy-amt-btn active" data-amt="1">x1</button>
+        <button class="buy-amt-btn" data-amt="10">x10</button>
+        <button class="buy-amt-btn" data-amt="100">x100</button>
+        <button class="buy-amt-btn" data-amt="-1">Max</button>
+      </div>
+    </div>
+    <div id="store-content"></div>
+  </section>
+
+  <button class="mobile-store-btn" id="btn-mobile-store"><i class="fa-solid fa-store"></i></button>
+  <div id="buff-bar"></div>
+  <div id="ticker"><div class="ticker-label"><i class="fa-solid fa-chart-line"></i> TRENDING</div><div id="ticker-text"><span id="ticker-scroll"></span></div></div>
+</div>
+
+<!-- PRESTIGE -->
+<div id="prestige-overlay" class="hidden">
+  <div class="prestige-card glass">
+    <i class="fa-solid fa-rotate" style="font-size:48px"></i>
+    <h2>NEW ACCOUNT</h2>
+    <p>Your meme empire collapsed. But your <strong>clout angels</strong> will fund the next one with permanent bonuses.</p>
+    <div class="stat-grid" id="prestige-stats"></div>
+    <div class="angels-earned"><i class="fa-solid fa-wand-magic-sparkles"></i>+<span id="angels-earned-val">0</span> Clout Angels</div>
+    <button class="btn-prestige" id="btn-prestige">RESTART</button>
+  </div>
+</div>
+
+<div id="viral-cookie" class="hidden"><i class="fa-solid fa-fire"></i></div>
+
+<script>
+function FA(c){return'<i class="fa-solid '+c+'"></i>'}
+// ====== MEME FACTORY v1 ======
+const SV=1,CM=1.15,ASAV=30000,AM=0.02;
+const SUF=['','K','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc','UDc','DDc','TDc','QaDc'];
+function fmt(n){if(n<0)return'-'+fmt(-n);if(n<1000)return Math.floor(n).toLocaleString();const t=Math.min(Math.floor(Math.log10(Math.max(n,1))/3),SUF.length-1),s=n/Math.pow(10,t*3);return(s<10?s.toFixed(2):s<100?s.toFixed(1):s.toFixed(0))+SUF[t]}
+function fmtD(n){return n<10?n.toFixed(1):fmt(n)}
+
+// ====== 10 BUILDINGS ======
+const BLDS=[
+  {id:'phone',name:'Burner Phone',emoji:'fa-mobile-screen',bg:'rgba(148,163,184,.1)',c:'#94a3b8',desc:'Post from the bathroom. Classic.',bc:15,bd:.1},
+  {id:'pc',name:'Gaming PC',emoji:'fa-desktop',bg:'rgba(96,165,250,.1)',c:'#60a5fa',desc:'RGB lights = 50% more clout.',bc:100,bd:.5},
+  {id:'alt',name:'Alt Account',emoji:'fa-masks-theater',bg:'rgba(244,114,182,.08)',c:'#f472b6',desc:'Self-reblog your own takes.',bc:1100,bd:4},
+  {id:'bot',name:'Bot Farm',emoji:'fa-robot',bg:'rgba(168,85,247,.08)',c:'#a855f7',desc:'10,000 followers. All very real.',bc:12000,bd:10},
+  {id:'tmpl',name:'Meme Template',emoji:'fa-image',bg:'rgba(251,191,36,.08)',c:'#fbbf24',desc:'Drake format #4829.',bc:130000,bd:40},
+  {id:'tiktok',name:'TikTok Algorithm',emoji:'fa-music',bg:'rgba(236,72,153,.08)',c:'#ec4899',desc:'You are now on the FYP. Forever.',bc:1.4e6,bd:100},
+  {id:'discord',name:'Discord Server',emoji:'fa-comments',bg:'rgba(99,102,241,.08)',c:'#818cf8',desc:'2,000 members. 1,997 are bots.',bc:20e6,bd:400},
+  {id:'reddit',name:'Reddit Mod Empire',emoji:'fa-hammer',bg:'rgba(249,115,22,.08)',c:'#fb923c',desc:'You hold the ban hammer.',bc:330e6,bd:2000},
+  {id:'blue',name:'Twitter Blue Army',emoji:'fa-circle-check',bg:'rgba(34,211,238,.08)',c:'#22d3ee',desc:'The checkmark is power.',bc:5.1e9,bd:10000},
+  {id:'algo',name:'The Algorithm',emoji:'fa-brain',bg:'rgba(168,85,247,.12)',c:'#c084fc',desc:'You didn\'t beat it. You became it.',bc:75e9,bd:100000},
+];
+
+// ====== UPGRADES ======
+const UPGS=[
+  // Click chain
+  {id:'ck2',n:'Sticky Notes',d:'Write memes on sticky notes. +1 clout/click.',cost:100,ic:'fa-note-sticky',bg:'rgba(255,255,255,.05)',c:'var(--text)',e:{ck:1},r:{}},
+  {id:'ck5',n:'Mechanical Keyboard',d:'Cherry MX Green switches. Loud = funny. +3/click.',cost:500,ic:'fa-keyboard',bg:'rgba(255,255,255,.05)',c:'var(--text)',e:{ck:3},r:{ck2:1}},
+  {id:'ck15',n:'Brainrot Vocabulary',d:'Sigma, skibidi, rizz. The holy trinity. +10/click.',cost:5000,ic:'fa-brain',bg:'rgba(244,114,182,.06)',c:'var(--brainrot)',e:{ck:10},r:{ck5:1}},
+  {id:'ck50',n:'Meme Degree',d:'BS in Memology from Ohio State. +35/click.',cost:50000,ic:'fa-graduation-cap',bg:'rgba(251,191,36,.06)',c:'var(--gold)',e:{ck:35},r:{ck15:1}},
+  {id:'ck200',n:'Viral Formula',d:'Scientists can\'t explain it. +150/click.',cost:5e6,ic:'fa-microscope',bg:'rgba(168,85,247,.06)',c:'var(--purple)',e:{ck:150},r:{ck50:1}},
+  {id:'ck1k',n:'Conscious Memeing',d:'You dream in Impact font. +800/click.',cost:500e6,ic:'fa-wand-magic-sparkles',bg:'rgba(96,165,250,.06)',c:'var(--angel)',e:{ck:800},r:{ck200:1}},
+  {id:'ck5k',n:'Memetic Singularity',d:'Reality is just a meme you haven\'t posted. +4000/click.',cost:500e9,ic:'fa-hurricane',bg:'rgba(244,114,182,.08)',c:'var(--pink)',e:{ck:4000},r:{ck1k:1}},
+  // Building doublers
+  {id:'d_phone',n:'Better Signal',d:'Burner Phone x2. You found a WiFi hotspot.',cost:1000,ic:'fa-signal',bg:'rgba(148,163,184,.08)',c:'#94a3b8',e:{dm:{phone:2}},r:{phone:10}},
+  {id:'d_pc',n:'More RAM',d:'Gaming PC x2. 64GB ought to be enough.',cost:5000,ic:'fa-floppy-disk',bg:'rgba(96,165,250,.08)',c:'#60a5fa',e:{dm:{pc:2}},r:{pc:10}},
+  {id:'d_alt',n:'VPN Layer',d:'Alt Account x2. Even your alts have alts now.',cost:50000,ic:'fa-lock',bg:'rgba(244,114,182,.06)',c:'#f472b6',e:{dm:{alt:2}},r:{alt:10}},
+  {id:'d_bot',n:'AI Bots',d:'Bot Farm x2. They passed the Turing test.',cost:500000,ic:'fa-robot',bg:'rgba(168,85,247,.06)',c:'#a855f7',e:{dm:{bot:2}},r:{bot:10}},
+  {id:'d_tmpl',n:'Deep Fried Filter',d:'Meme Template x2. Extra crispy.',cost:5e6,ic:'fa-camera',bg:'rgba(251,191,36,.06)',c:'#fbbf24',e:{dm:{tmpl:2}},r:{tmpl:10}},
+  {id:'d_tiktok',n:'Sound Original',d:'TikTok Algorithm x2. Your sounds get stolen 10x more.',cost:50e6,ic:'fa-music',bg:'rgba(236,72,153,.06)',c:'#ec4899',e:{dm:{tiktok:2}},r:{tiktok:10}},
+  {id:'d_discord',n:'Nitro Boost',d:'Discord Server x2. The custom emojis alone carry it.',cost:500e6,ic:'fa-bolt',bg:'rgba(99,102,241,.06)',c:'#818cf8',e:{dm:{discord:2}},r:{discord:10}},
+  {id:'d_reddit',n:'Power Mod',d:'Reddit Mod Empire x2. You moderate reality itself.',cost:5e9,ic:'fa-hammer',bg:'rgba(249,115,22,.06)',c:'#fb923c',e:{dm:{reddit:2}},r:{reddit:10}},
+  {id:'d_blue',n:'Double Blue',d:'Twitter Blue Army x2. Two checkmarks. Twice the power.',cost:50e9,ic:'fa-circle-check',bg:'rgba(34,211,238,.06)',c:'#22d3ee',e:{dm:{blue:2}},r:{blue:10}},
+  {id:'d_algo',n:'Source Code Access',d:'The Algorithm x2. You read the source. It\'s all CSS.',cost:50e12,ic:'fa-laptop-code',bg:'rgba(168,85,247,.08)',c:'#c084fc',e:{dm:{algo:2}},r:{algo:10}},
+  // Globals
+  {id:'g2',n:'Go Viral',d:'ALL production x2. The internet noticed you.',cost:100e6,ic:'fa-chart-line',bg:'rgba(251,191,36,.08)',c:'var(--gold)',e:{gm:2},r:{reddit:5,discord:5}},
+  {id:'g3',n:'Algorithm Hack',d:'ALL production x3. You found a backdoor.',cost:100e9,ic:'fa-lock-open',bg:'rgba(251,191,36,.08)',c:'var(--gold)',e:{gm:3},r:{g2:1}},
+  {id:'g5',n:'Cultural Reset',d:'ALL production x5. You ARE the internet now.',cost:100e12,ic:'fa-earth-americas',bg:'rgba(251,191,36,.1)',c:'var(--gold)',e:{gm:5},r:{g3:1,algo:25}},
+];
+
+// ====== ANGEL UPGRADES ======
+const AUPGS=[
+  {id:'a_ck2',n:'Blessed Posts',d:'2x click power permanently.',cost:5,ic:'fa-hand-point-up',bg:'rgba(96,165,250,.06)',c:'var(--angel)',e:{ackMult:2}},
+  {id:'a_dps2',n:'Divine CPS',d:'2x all production permanently.',cost:10,ic:'fa-chart-line',bg:'rgba(96,165,250,.06)',c:'var(--angel)',e:{agm:2}},
+  {id:'a_viral',n:'Viral Aura',d:'+5x to viral cookie effects.',cost:25,ic:'fa-fire',bg:'rgba(96,165,250,.06)',c:'var(--angel)',e:{aviralMult:5}},
+  {id:'a_ck5',n:'Holy Clout',d:'5x click power permanently.',cost:50,ic:'fa-volcano',bg:'rgba(96,165,250,.06)',c:'var(--angel)',e:{ackMult:5}},
+  {id:'a_dps5',n:'Seraphic Memes',d:'5x all production permanently.',cost:100,ic:'fa-wand-magic-sparkles',bg:'rgba(96,165,250,.06)',c:'var(--angel)',e:{agm:5}},
+];
+
+// ====== 18 CHAOTIC EVENTS ======
+const EVENTS=[
+  {id:'elon',icon:'fa-rocket',text:'ELON MUSK LIKES YOUR POST — 777x production for 7 seconds!',dur:7,type:'dps',buff:{id:'elon',mult:777,label:'Elon\'s Like',icon:'fa-rocket'},fn(){SFX.evt();doMegaShake()}},
+  {id:'aoc',icon:'fa-face-smile',text:'AOC QUOTES YOUR MEME IN CONGRESS — +30% of total clout!',dur:0,type:'instant',fn(){const g=S.clout*0.3;S.clout+=g;S.totalClout+=g;SFX.evt();const r=document.getElementById('meme-btn').getBoundingClientRect();showFloat('+'+fmt(g)+' clout!','var(--gold)',r.left+r.width/2,r.top-10);doShake()}},
+  {id:'brand',icon:'fa-gem',text:'BRAND DEAL! — 3x production for 25 seconds',dur:25,type:'dps',buff:{id:'brand',mult:3,label:'Brand Deal',icon:'fa-gem'},fn(){SFX.evt()}},
+  {id:'fyp',icon:'fa-play',text:'TIKTOK PUTS YOU ON THE FYP — 10x for 10 seconds',dur:10,type:'dps',buff:{id:'fyp',mult:10,label:'On The FYP',icon:'fa-play'},fn(){SFX.evt();doShake()}},
+  {id:'beast',icon:'fa-fire',text:'MRBEAST SHOUTS YOU OUT — 100x for 5 seconds',dur:5,type:'dps',buff:{id:'beast',mult:100,label:'MrBeast!',icon:'fa-fire'},fn(){SFX.evt();doMegaShake();spawnBurst(innerWidth/2,innerHeight/2,60)}},
+  {id:'stolen',icon:'fa-clipboard-list',text:'BOOMER FACEBOOK PAGE STOLE YOUR MEME — +20% clout (ironic)',dur:0,type:'instant',fn(){const g=S.clout*0.2;S.clout+=g;S.totalClout+=g;SFX.evt();const r=document.getElementById('meme-btn').getBoundingClientRect();showFloat('+'+fmt(g)+' (stolen clout)','var(--brainrot)',r.left+r.width/2,r.top-10)}},
+  {id:'trend',icon:'fa-chart-line',text:'YOU TREND #1 WORLDWIDE — 10x for 15 seconds',dur:15,type:'dps',buff:{id:'trend',mult:10,label:'#1 Trending',icon:'fa-chart-line'},fn(){SFX.evt();doMegaShake()}},
+  {id:'chatgpt',icon:'fa-robot',text:'CHATGPT WRITES YOUR NEXT MEME — 5x clicks for 20s',dur:20,type:'click',buff:{id:'chatgpt',mult:5,label:'AI Memes',icon:'fa-robot'},fn(){SFX.evt()}},
+  {id:'raid',icon:'fa-users',text:'DISCORD RAID INCOMING! — 4x production for 30s',dur:30,type:'dps',buff:{id:'raid',mult:4,label:'Raid Mode',icon:'fa-users'},fn(){SFX.evt()}},
+  {id:'shadowban',icon:'fa-ban',text:'SHADOWBANNED... AGAIN — 2x for 60s (but dark)',dur:60,type:'dps',buff:{id:'shadow',mult:2,label:'Shadowbanned',icon:'fa-ban'},fn(){SFX.evt();document.body.style.filter='brightness(0.6) contrast(1.2)'}},
+  {id:'reaction',icon:'fa-video',text:'SOMEONE MAKES A TIKTOK ABOUT YOUR MEME — +5min CPS instantly',dur:0,type:'instant',fn(){const g=getCPS()*300;S.clout+=g;S.totalClout+=g;SFX.evt();const r=document.getElementById('meme-btn').getBoundingClientRect();showFloat('+'+fmt(g)+' clout!','var(--gold)',r.left+r.width/2,r.top-10);doShake()}},
+  {id:'furry',icon:'fa-paw',text:'YOU ACCIDENTALLY BECOME A FURRY — 5x for 30s',dur:30,type:'dps',buff:{id:'furry',mult:5,label:'Furry Arc',icon:'fa-paw'},fn(){SFX.evt();const b=document.getElementById('meme-btn');b.querySelector('.btn-emoji').innerHTML=FA('fa-paw');b.style.borderColor='rgba(244,114,182,.4)'}},
+  {id:'subreddit',icon:'fa-comment',text:'A SUBREDDIT DEDICATED TO YOU — 3x clicks for 20s',dur:20,type:'click',buff:{id:'subreddit',mult:3,label:'r/YourName',icon:'fa-comment'},fn(){SFX.evt();doShake()}},
+  {id:'nft',icon:'fa-coins',text:'YOUR MEME BECOMES AN NFT — +50% of total clout!',dur:0,type:'instant',fn(){const g=S.clout*0.5;S.clout+=g;S.totalClout+=g;SFX.evt();const r=document.getElementById('meme-btn').getBoundingClientRect();showFloat('+'+fmt(g)+' clout!','var(--cyan)',r.left+r.width/2,r.top-10);doMegaShake()}},
+  {id:'cancel',icon:'fa-circle-stop',text:'CANCEL CULTURE MISSES YOU — 2x for 45s',dur:45,type:'dps',buff:{id:'cancel',mult:2,label:'Uncancellable',icon:'fa-circle-stop'},fn(){SFX.evt()}},
+  {id:'argument',icon:'fa-comment',text:'YOU WIN AN INTERNET ARGUMENT — +10% clout',dur:0,type:'instant',fn(){const g=S.clout*0.1;S.clout+=g;S.totalClout+=g;SFX.evt();const r=document.getElementById('meme-btn').getBoundingClientRect();showFloat('+'+fmt(g),'var(--clout)',r.left+r.width/2,r.top-10)}},
+  {id:'copypasta',icon:'fa-clipboard-list',text:'A COPYPASTA IS BORN — 77x for 10 seconds',dur:10,type:'dps',buff:{id:'copypasta',mult:77,label:'Copypasta',icon:'fa-clipboard-list'},fn(){SFX.evt();doShake()}},
+  {id:'yours',icon:'fa-earth-americas',text:'THE INTERNET IS YOURS — 1000x for 3 seconds',dur:3,type:'dps',buff:{id:'yours',mult:1000,label:'THE INTERNET',icon:'fa-earth-americas'},fn(){SFX.evt();doMegaShake();spawnBurst(innerWidth/2,innerHeight/2,100)}},
+];
+
+// ====== VIRAL COOKIE EFFECTS ======
+const VIRAL_FX=[
+  {label:'Frenzy',fn(){addBuff('vfrenzy','dps',7,77,'fa-explosion','Viral Frenzy');showToast('VIRAL FRENZY! 77x production for 7s!','success')}},
+  {label:'Click Storm',fn(){addBuff('vclick','click',13,777,'fa-lightbulb','Click Storm');showToast('CLICK STORM! 777x clicks for 13s!','success')}},
+  {label:'Clout Rain',fn(){const g=S.clout*0.1;S.clout+=g;S.totalClout+=g;showToast('CLOUT RAIN! +'+fmt(g)+' clout!','success');doShake()}},
+  {label:'Instant CPS',fn(){const g=getCPS()*300;S.clout+=g;S.totalClout+=g;showToast('INSTANT! +'+fmt(g)+' clout (5min CPS)!','success');doMegaShake()}},
+];
+
+// ====== ACHIEVEMENTS ======
+const ACHS=[
+  {id:'ck1',n:'First Post',d:'Click for the first time.',i:'fa-hand-point-up',ck:s=>s.tc>=1},
+  {id:'ck100',n:'Meme Machine',d:'Click 100 times.',i:'fa-hand-point-up',ck:s=>s.tc>=100},
+  {id:'ck1k',n:'Post Goblin',d:'Click 1,000 times.',i:'fa-hand-point-up',ck:s=>s.tc>=1000},
+  {id:'ck10k',n:'No Sleep Poster',d:'Click 10,000 times.',i:'fa-hand-point-up',ck:s=>s.tc>=10000},
+  {id:'e10k',n:'Small Time',d:'Earn 10K total clout.',i:'fa-money-bill-wave',ck:s=>s.td>=10000},
+  {id:'e1m',n:'Micro-Influencer',d:'Earn 1M total clout.',i:'fa-chart-line',ck:s=>s.td>=1e6},
+  {id:'e1b',n:'Viral Sensation',d:'Earn 1B total clout.',i:'fa-fire',ck:s=>s.td>=1e9},
+  {id:'e1t',n:'Internet Royalty',d:'Earn 1T total clout.',i:'fa-star',ck:s=>s.td>=1e12},
+  {id:'b1',n:'First Investment',d:'Buy your first Meme Mill.',i:'fa-building',ck:s=>Object.values(s.dep).some(v=>v>=1)},
+  {id:'b50',n:'Meme Lord',d:'Own 50 of any Meme Mill.',i:'fa-building',ck:s=>Object.values(s.dep).some(v=>v>=50)},
+  {id:'b100',n:'Content Farm',d:'Own 100 of any Meme Mill.',i:'fa-landmark',ck:s=>Object.values(s.dep).some(v=>v>=100)},
+  {id:'cps100',n:'Meme Stream',d:'Reach 100 CPS.',i:'fa-wind',ck:s=>getCPS(s)>=100},
+  {id:'cps10k',n:'Meme Flood',d:'Reach 10K CPS.',i:'fa-bolt',ck:s=>getCPS(s)>=10000},
+  {id:'cps1m',n:'Meme Tsunami',d:'Reach 1M CPS.',i:'fa-tornado',ck:s=>getCPS(s)>=1e6},
+  {id:'a1',n:'First Angel',d:'Earn your first Clout Angel.',i:'fa-wand-magic-sparkles',ck:s=>s.tae>=1},
+  {id:'v1',n:'First Viral',d:'Click your first viral cookie.',i:'fa-fire',ck:s=>s.vc>=1},
+  {id:'v10',n:'Viral Addict',d:'Click 10 viral cookies.',i:'fa-fire',ck:s=>s.vc>=10},
+  {id:'ev1',n:'First Event',d:'Witness your first internet event.',i:'fa-bolt',ck:s=>s.ec>=1},
+  {id:'allb',n:'Full Empire',d:'Own at least 1 of every Meme Mill.',i:'fa-building',ck:s=>BLDS.every(d=>(s.dep[d.id]||0)>=1)},
+];
+
+// ====== NEWS ======
+const HEADS=['BREAKING: LOCAL TEEN\'S MEME REACHES 47 MILLION VIEWS','STUDY FINDS 98% OF INTERNET ARGUMENTS ARE ABOUT MEMES NOW','BOOMER WHO POSTED MINION MEME ACCIDENTALLY GOES VIRAL','TIKTOK BANS DANCING, ALLOWS ONLY MEME POSING FROM NOW ON','REDDIT MOD PROMOTES HIMSELF TO CEO OF INTERNET','YOUR MEME HAS BEEN TRANSLATED INTO 47 LANGUAGES','SCIENTISTS CONFIRM: MEMES ARE THE BASIC UNIT OF MODERN CULTURE','ELON MUSK CHANGES PLATFORM NAME TO YOUR MEME\'S NAME','NEW STUDY: PEOPLE WHO POST MEMES LIVE 3 HOURS LONGER (ON THEIR PHONE)','TikTok announces new feature: automatic meme generation based on your brainwaves','Your alt account just got more followers than your main','World\'s largest meme archive recognizes your contributions','Breaking: Nothing happened. You just lost 2 hours scrolling memes.','LOCAL MAN DISCOVERS HE CAN POST MEMES FOR FREE, STOPS PAYING RENT','Scientists name new element after your meme: Memesium (symbol: \U0001f4a5)','Your meme has been added to the Museum of Modern Internet Art','CONGRESS PASSES BILL TO MAKE YOUR MEME THE NATIONAL MEME','META ANNOUNCES NEW APP: JUST YOUR MEMES, ON REPEAT, FOREVER','Breaking: The algorithm has been personalizing memes for you since 2019','Your meme has been translated into a Broadway musical','STOCK MARKET CRASHES AFTER YOU POST A mediocre MEME','NEW WORLD RECORD: Most memes posted in one hour (it was you)','Your meme energy bill is higher than most countries\' GDP','Breaking: Scholars debate whether your memes qualify as modern art','You\'ve been banned from 3 platforms today. Personal best!','LOCAL MEME FACTORY WORKER UNIONIZES, DEMANDS BETTER EMOJI BENEFITS','Scientists confirm: reading your memes increases IQ by 0.003 points'];
+
+// ====== STATE ======
+const S={clout:0,totalClout:0,tc:0,cp:1,dep:{},pu:[],angels:0,tae:0,snd:true,ua:[],mc:0,apu:[],buyAmt:1,activeBuffs:{},activeEvent:null,eventEnd:0,eventOrigDur:0,nextEvent:0,ec:0,vc:0,_ls:0};
+
+// ====== DERIVED ======
+function gdo(id){return S.dep[id]||0}
+function gcost(id){const d=BLDS.find(x=>x.id===id);return Math.ceil(d.bc*Math.pow(CM,gdo(id)))}
+function gcostN(id,n){let t=0;for(let i=0;i<n;i++)t+=Math.ceil(BLDS.find(x=>x.id===id).bc*Math.pow(CM,gdo(id)+i));return t}
+function gmax(id){let n=0;const d=BLDS.find(x=>x.id===id);while(Math.ceil(d.bc*Math.pow(CM,gdo(id)+n))<=S.clout)n++;return n}
+function gck(){
+  let p=S.cp;
+  for(const u of S.pu){const up=UPGS.find(x=>x.id===u);if(up&&up.e.ck)p+=up.e.ck}
+  let am=1;for(const a of S.apu){const up=AUPGS.find(x=>x.id===a);if(up&&up.e.ackMult)am*=up.e.ackMult}
+  p*=am;
+  for(const b of Object.values(S.activeBuffs)){if(b.type==='click')p*=b.mult}
+  p*=(1+S.angels*AM);
+  return p;
+}
+function getCPS(s){
+  const st=s||S;if(!st)return 0;let cps=0;
+  for(const d of BLDS){const owned=st.dep[d.id]||0;if(owned<=0)continue;let dd=d.bd*owned;for(const u of st.pu){const up=UPGS.find(x=>x.id===u);if(up&&up.e.dm&&up.e.dm[d.id])dd*=up.e.dm[d.id]}cps+=dd}
+  let gm=1;for(const u of st.pu){const up=UPGS.find(x=>x.id===u);if(up&&up.e.gm)gm*=up.e.gm}cps*=gm;
+  let agm=1;for(const a of st.apu){const up=AUPGS.find(x=>x.id===a);if(up&&up.e.agm)agm*=up.e.agm}cps*=agm;
+  cps*=(1+st.angels*AM);
+  for(const b of Object.values(st.activeBuffs||{})){if(b.type==='dps')cps*=b.mult}
+  return cps;
+}
+function gAP(){return Math.floor(Math.pow(S.totalClout/1e6,0.5))}
+function canUp(up){
+  if(S.pu.includes(up.id))return false;if(S.clout<up.cost)return false;
+  for(const[k,v]of Object.entries(up.r)){
+    if(k.startsWith('ck')||k.startsWith('g')){if(!S.pu.includes(k))return false}
+    else{if((S.dep[k]||0)<v)return false}
+  }return true;
+}
+
+// ====== AUDIO ======
+const SFX={_c:null,init(){if(!this._c)this._c=new(window.AudioContext||window.webkitAudioContext)();if(this._c.state==='suspended')this._c.resume()},
+  _p(f,d,t,v){v=v||.1;if(!S.snd||!this._c)return;const now=this._c.currentTime,o=this._c.createOscillator(),g=this._c.createGain();o.type=t||'sine';if(Array.isArray(f)){f.forEach((fr,i)=>{o.frequency.setValueAtTime(fr,now+i*(d/f.length))})}else{o.frequency.setValueAtTime(f,now)}g.gain.setValueAtTime(v,now);g.gain.exponentialRampToValueAtTime(.001,now+d);o.connect(g).connect(this._c.destination);o.start(now);o.stop(now+d+.01)},
+  click(){this._p(520,.06,'sine',.08)},buy(){this._p([600,900],.1,'triangle',.06)},evt(){this._p([300,500,700,500],.3,'sawtooth',.06)},viral(){this._p([523,659,784,1047],.4,'sine',.1)},prestige(){this._p([330,660,1320],.5,'sine',.1)},ach(){this._p([880,1100],.2,'triangle',.05)},};
+
+// ====== PARTICLES ======
+const cvs=document.getElementById('particle-canvas'),cx=cvs.getContext('2d');const pts=[];
+function rCvs(){cvs.width=innerWidth;cvs.height=innerHeight}
+addEventListener('resize',rCvs);rCvs();
+function spawnBurst(x,y,n){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,sp=2+Math.random()*5;const cs=['#ec4899','#a855f7','#6366f1','#fbbf24','#22d3ee','#4ade80','#f472b6','#fb923c'];pts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,c:cs[Math.floor(Math.random()*cs.length)],a:.7+Math.random()*.3,sz:2+Math.random()*4,life:30+Math.random()*20,ml:50})}}
+function renderPts(){cx.clearRect(0,0,cvs.width,cvs.height);for(let i=pts.length-1;i>=0;i--){const p=pts[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.08;p.life--;p.a=Math.max(0,(p.life/p.ml)*.7);p.sz*=.98;if(p.life<=0){pts.splice(i,1);continue}cx.globalAlpha=p.a;cx.fillStyle=p.c;cx.beginPath();cx.arc(p.x,p.y,Math.max(.5,p.sz),0,Math.PI*2);cx.fill()}cx.globalAlpha=1}
+
+// ====== HELPERS ======
+function doShake(){document.body.classList.remove('shaking');void document.body.offsetWidth;document.body.classList.add('shaking');setTimeout(()=>document.body.classList.remove('shaking'),100)}
+function doMegaShake(){document.body.classList.remove('mega-shaking');void document.body.offsetWidth;document.body.classList.add('mega-shaking');setTimeout(()=>document.body.classList.remove('mega-shaking'),500)}
+function showFloat(txt,col,x,y){const e=document.createElement('div');e.className='float-text';e.textContent=txt;e.style.color=col;e.style.left=x+'px';e.style.top=y+'px';e.style.transform='translateX(-50%)';document.body.appendChild(e);e.addEventListener('animationend',()=>e.remove())}
+function showToast(m,t){const ex=document.querySelector('.toast');if(ex)ex.remove();const e=document.createElement('div');e.className='toast '+t;e.textContent=m;document.body.appendChild(e);setTimeout(()=>{if(e.parentNode)e.remove()},2200)}
+function addBuff(id,type,dur,mult,icon,label){S.activeBuffs[id]={mult,label,icon,type};setTimeout(()=>{if(S.activeBuffs[id])delete S.activeBuffs[id]},dur*1000)}
+
+// ====== EMOJI BACKGROUND ======
+const EMOJIS=['fa-heart','fa-star','fa-fire','fa-face-laugh-squint','fa-explosion','fa-champagne-glasses','fa-thumbs-up','fa-fire','fa-bolt','fa-wand-sparkles','fa-face-grin-stars','fa-lightbulb'];
+function spawnEmojiBG(){
+  const container=document.getElementById('emoji-bg');if(!container)return;
+  for(let i=0;i<12;i++){
+    const el=document.createElement('div');el.className='emoji-bubble';
+    el.innerHTML=FA(EMOJIS[Math.floor(Math.random()*EMOJIS.length)]);
+    el.style.left=Math.random()*100+'%';
+    el.style.fontSize=(16+Math.random()*20)+'px';
+    el.style.animationDuration=(15+Math.random()*25)+'s';
+    el.style.animationDelay=(Math.random()*20)+'s';
+    container.appendChild(el);
+  }
+}
+
+// ====== CORE ======
+function handleClick(e){
+  SFX.init();
+  let p=gck();
+  S.clout+=p;S.totalClout+=p;S.tc++;
+  document.getElementById('clout-amount').textContent=fmt(S.clout);
+  document.getElementById('clout-amount').classList.add('flash');
+  setTimeout(()=>document.getElementById('clout-amount').classList.remove('flash'),300);
+  const btn=document.getElementById('meme-btn'),r=btn.getBoundingClientRect();
+  showFloat('+'+fmt(p),'var(--clout)',r.left+r.width/2+(Math.random()-.5)*80,r.top-10);
+  spawnBurst(e.clientX||r.left+r.width/2,e.clientY||r.top+r.height/2,6);
+  SFX.click();
+  btn.classList.remove('pressed');void btn.offsetWidth;btn.classList.add('pressed');
+  setTimeout(()=>btn.classList.remove('pressed'),80);
+  const rp=document.createElement('div');rp.className='click-ripple';btn.appendChild(rp);
+  rp.addEventListener('animationend',()=>rp.remove());
+  doShake();checkAch();
+}
+function buyBld(id){
+  const amt=S.buyAmt===-1?gmax(id):S.buyAmt;
+  const cost=S.buyAmt===-1?gcostN(id,gmax(id)):S.buyAmt===1?gcost(id):gcostN(id,S.buyAmt);
+  if(S.clout<cost||amt<=0)return;
+  S.clout-=cost;S.dep[id]=(S.dep[id]||0)+amt;
+  SFX.buy();renderStore();checkAch();
+}
+function buyUpg(id){
+  const up=UPGS.find(u=>u.id===id);if(!up||!canUp(up))return;
+  S.clout-=up.cost;S.pu.push(id);SFX.buy();renderStore();checkAch();
+}
+function buyAngelUp(id){
+  const up=AUPGS.find(u=>u.id===id);
+  if(!up||S.apu.includes(id)||S.angels<up.cost)return;
+  S.angels-=up.cost;S.apu.push(id);SFX.buy();renderStore();
+}
+
+// ====== VIRAL COOKIE (Golden Cookie) ======
+let viralTimer=null,viralPos=null;
+function spawnViral(){
+  if(viralTimer)return;
+  const el=document.getElementById('viral-cookie');
+  const margin=80;
+  viralPos={x:margin+Math.random()*(innerWidth-margin*2-60),y:margin+Math.random()*(innerHeight-margin*2-60)};
+  el.style.left=viralPos.x+'px';el.style.top=viralPos.y+'px';
+  el.classList.remove('hidden');
+  SFX.viral();
+  viralTimer=setTimeout(()=>{el.classList.add('hidden');viralTimer=null},15000);
+}
+function clickViral(){
+  if(!viralTimer)return;
+  clearTimeout(viralTimer);viralTimer=null;
+  const el=document.getElementById('viral-cookie');
+  el.classList.add('hidden');
+  S.vc++;
+  const fx=VIRAL_FX[Math.floor(Math.random()*VIRAL_FX.length)];
+ fx.fn();
+  spawnBurst(viralPos.x+30,viralPos.y+30,30);
+  doMegaShake();
+  checkAch();
+  // Schedule next
+  const next=40000+Math.random()*80000;
+ setTimeout(spawnViral,next);
+}
+
+// ====== EVENTS ======
+function triggerEvent(){
+  if(S.activeEvent)return;
+  const ev=EVENTS[Math.floor(Math.random()*EVENTS.length)];
+  S.activeEvent=ev;S.ec++;
+  document.getElementById('event-icon').innerHTML=FA(ev.icon);
+  document.getElementById('event-text').textContent=ev.text;
+  document.getElementById('event-banner').classList.remove('hidden');
+  document.getElementById('viral-tint').classList.add('active');
+  try{ev.fn()}catch(err){console.error('Event error:',err)}
+  if(ev.dur>0){
+    S.eventOrigDur=ev.dur;S.eventEnd=Date.now()+ev.dur*1000;
+    if(ev.buff){S.activeBuffs[ev.buff.id]={mult:ev.buff.mult,label:ev.buff.label,icon:ev.buff.icon,type:ev.type==='click'?'click':'dps'}}
+  } else {
+    setTimeout(()=>endEvent(),3000);
+  }
+  checkAch();
+}
+function endEvent(){
+  if(!S.activeEvent)return;
+  const ev=S.activeEvent;
+  if(ev.buff&&S.activeBuffs[ev.buff.id])delete S.activeBuffs[ev.buff.id];
+  // Reset visuals
+  if(ev.id==='furry'){document.getElementById('meme-btn').querySelector('.btn-emoji').innerHTML=FA('fa-mobile-screen');document.getElementById('meme-btn').style.borderColor=''}
+  if(ev.id==='shadowban'){document.body.style.filter=''}
+  document.getElementById('event-banner').classList.add('hidden');
+  document.getElementById('viral-tint').classList.remove('active');
+  S.activeEvent=null;
+}
+
+// ====== ACHIEVEMENTS ======
+function checkAch(){
+  const cs={td:S.totalClout,tc:S.tc,dep:S.dep,pu:S.pu,angels:S.angels,tae:S.tae,vc:S.vc,ec:S.ec,apu:S.apu||[],activeBuffs:S.activeBuffs||{}};
+  for(const a of ACHS){if(S.ua.includes(a.id))continue;try{if(a.ck(cs)){S.ua.push(a.id);showAchToast(a);SFX.ach()}}catch(e){}}
+}
+function showAchToast(a){
+  const e=document.createElement('div');e.className='ach-toast glass';
+  e.innerHTML=''+FA(a.i)+'<span>Achievement: <span class="ach-name">'+a.n+'</span></span>';
+  document.body.appendChild(e);setTimeout(()=>{if(e.parentNode)e.remove()},3200);
+}
+
+// ====== PRESTIGE ======
+function startPrestige(){
+  const ap=gAP();if(ap<=S.tae)return;
+  const na=ap-S.tae;
+  document.getElementById('prestige-stats').innerHTML=
+    '<div class="stat-row"><span class="stat-label">Total Clout</span><span class="stat-val" style="color:var(--clout)">'+fmt(S.totalClout)+'</span></div>'+
+    '<div class="stat-row"><span class="stat-label">Total Posts</span><span class="stat-val">'+S.tc.toLocaleString()+'</span></div>'+
+    '<div class="stat-row"><span class="stat-label">Viral Cookies</span><span class="stat-val" style="color:var(--gold)">'+S.vc+'</span></div>'+
+    '<div class="stat-row"><span class="stat-label">Current Angels</span><span class="stat-val" style="color:var(--angel)">'+S.angels+'</span></div>';
+  document.getElementById('angels-earned-val').textContent=na;
+  document.getElementById('prestige-overlay').classList.remove('hidden');SFX.prestige();
+}
+function doPrestige(){
+  const na=gAP()-S.tae;S.angels+=na;S.tae=gAP();
+  S.clout=0;S.totalClout=0;S.tc=0;S.dep={};S.pu=[];S.cp=1;S.activeBuffs={};S.activeEvent=null;
+  S._ls=Date.now();
+  document.getElementById('prestige-overlay').classList.add('hidden');
+  endEvent();
+  const f=document.getElementById('flash');f.classList.add('active');setTimeout(()=>f.classList.remove('active'),1200);
+  renderStore();updateUI();
+}
+
+// ====== UI ======
+let aTab='blds',uCnt=0,sCnt=0;
+function renderStore(){
+  const c=document.getElementById('store-content');
+  if(aTab==='blds'){
+    let h='';
+    for(const d of BLDS){
+      const owned=gdo(d.id),amt=S.buyAmt===-1?gmax(d.id):S.buyAmt;
+      const cost=S.buyAmt===-1?gcostN(d.id,amt):amt===1?gcost(d.id):gcostN(d.id,amt);
+      const can=S.clout>=cost&&amt>0;
+      h+='<div class="bld-card'+(can?' affordable':'')+'"><div class="bld-icon" style="background:'+d.bg+'">'+FA(d.emoji)+'</div><div class="bld-info"><div class="bld-header"><span class="bld-name">'+d.name+'</span><span class="bld-owned">'+owned+'</span></div><div class="bld-desc">'+d.desc+'</div><div class="bld-footer"><div><span class="bld-cost">'+fmt(cost)+'</span> <span class="bld-cps">(x'+amt+', +'+fmtD(d.bd*amt)+'/s)</span></div><button class="btn-buy'+(can?' can-buy':'')+'" data-bb="'+d.id+'" '+(can?'':'disabled')+'>Buy x'+(S.buyAmt===-1?amt:S.buyAmt)+'</button></div></div></div>';
+    }
+    c.innerHTML=h;
+    c.querySelectorAll('[data-bb]').forEach(b=>b.addEventListener('click',()=>buyBld(b.dataset.bb)));
+  } else if(aTab==='upgs'){
+    let h='',vis=false;
+    for(const u of UPGS){
+      if(S.pu.includes(u.id))continue;
+      let req=true;
+      for(const[k,v]of Object.entries(u.r)){
+        if(k.startsWith('ck')||k.startsWith('g')){if(!S.pu.includes(k)){req=false;break}}
+        else{if((S.dep[k]||0)<v){req=false;break}}
+      }
+      if(!req)continue;vis=true;
+      const can=S.clout>=u.cost;
+      h+='<div class="upg-card'+(can?' affordable':'')+'"><div class="upg-icon" style="background:'+u.bg+';color:'+u.c+'">'+FA(u.ic)+'</div><div class="upg-info"><div class="upg-name">'+u.n+'</div><div class="upg-desc">'+u.d+'</div><div class="upg-footer"><span class="upg-cost">'+fmt(u.cost)+'</span><button class="btn-upg" data-bu="'+u.id+'" '+(can?'':'disabled')+'>Buy</button></div></div></div>';
+    }
+    if(!vis)h='<p style="text-align:center;color:var(--dim);font-size:12px;padding:20px">No upgrades yet. Keep posting!</p>';
+    c.innerHTML=h;
+    c.querySelectorAll('[data-bu]').forEach(b=>b.addEventListener('click',()=>buyUpg(b.dataset.bu)));
+  } else if(aTab==='angels'){
+    let h='<div style="padding:4px"><p style="font-size:11px;color:var(--dim);margin-bottom:8px">You have <strong style="color:var(--angel)">'+S.angels+'</strong> Clout Angels.</p>';
+    for(const u of AUPGS){
+      const owned=S.apu.includes(u.id),can=S.angels>=u.cost&&!owned;
+      h+='<div class="upg-card angel-up'+(can?' affordable':'')+'" style="opacity:'+(owned?.5:1)+'"><div class="upg-icon" style="background:'+u.bg+';color:'+u.c+'">'+FA(u.ic)+'</div><div class="upg-info"><div class="upg-name">'+u.n+(owned?' \u2713':'')+'</div><div class="upg-desc">'+u.d+'</div><div class="upg-footer"><span class="angel-cost">'+u.cost+' angels</span><button class="btn-upg" data-ba="'+u.id+'" '+(can?'':'disabled')+'>'+(owned?'Owned':'Buy')+'</button></div></div></div>';
+    }
+    h+='</div>';c.innerHTML=h;
+    c.querySelectorAll('[data-ba]').forEach(b=>b.addEventListener('click',()=>buyAngelUp(b.dataset.ba)));
+  } else if(aTab==='awards'){
+    let h='<div style="padding:4px">';
+    for(const a of ACHS){
+      const u=S.ua.includes(a.id);
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;margin-bottom:3px;background:'+(u?'rgba(251,191,36,.04)':'rgba(255,255,255,.01)')+';opacity:'+(u?1:.3)+';border:1px solid '+(u?'rgba(251,191,36,.1)':'transparent')+'"><span style="font-size:18px;color:'+(u?'var(--gold)':'var(--dimmer)')+'">'+FA(a.i)+'</span><div><div style="font-size:12px;font-weight:600;color:'+(u?'var(--gold)':'var(--dimmer)')+'">'+a.n+'</div><div style="font-size:10px;color:var(--dimmer)">'+a.d+'</div></div></div>';
+    }
+    h+='</div>';c.innerHTML=h;
+  }
+}
+function updateUI(){
+  document.getElementById('clout-amount').textContent=fmt(S.clout);
+  document.getElementById('cps-val').textContent=fmtD(getCPS());
+  document.getElementById('click-power-label').textContent='+'+fmt(gck())+' / click';
+  document.getElementById('stat-clicks').textContent=S.tc.toLocaleString();
+  document.getElementById('stat-total').textContent=fmt(S.totalClout);
+  const ab=document.getElementById('angel-badge');
+  if(S.angels>0){ab.classList.remove('hidden');document.getElementById('angel-count').textContent=S.angels}else{ab.classList.add('hidden')}
+  // Event timer
+  if(S.activeEvent&&S.eventEnd>0){const rem=Math.max(0,(S.eventEnd-Date.now())/1000);const bd=S.eventOrigDur||1;document.getElementById('event-banner').querySelector('#event-timer-fill')?.style&&(void 0);if(rem<=0)endEvent()}
+  renderBuffs();
+}
+function renderBuffs(){
+  const bar=document.getElementById('buff-bar');let h='';
+  for(const b of Object.values(S.activeBuffs)){
+    const cls=b.type==='click'?'special':b.mult>=50?'viral':'positive';
+    h+='<div class="buff-pill '+cls+'">'+b.label+' (x'+b.mult+')</div>';
+  }
+  bar.innerHTML=h;
+}
+
+// ====== TICKER ======
+let tIdx=0;
+function updateTicker(){const el=document.getElementById('ticker-scroll');el.textContent=HEADS[tIdx%HEADS.length];el.style.animation='none';void el.offsetWidth;el.style.animation='tickMove 25s linear infinite';tIdx++}
+
+// ====== OFFLINE ======
+function calcOffline(){
+  const away=S._ls?((Date.now()-S._ls)/1000):0;
+  if(away<10)return 0;
+  const elapsed=Math.min(away,86400);
+  const cps=getCPS();
+  if(cps<=0)return 0;
+  return cps*elapsed*0.3;
+}
+
+// ====== GAME LOOP ======
+let lastT=performance.now();
+function loop(now){
+  const dt=(now-lastT)/1000;lastT=now;
+  const cps=getCPS();
+  if(cps>0){S.clout+=cps*dt;S.totalClout+=cps*dt}
+  // Event scheduling
+  if(!S.activeEvent&&Date.now()>=S.nextEvent&&S.nextEvent>0){triggerEvent();S.nextEvent=Date.now()+(40+Math.random()*50)*1000}
+  renderPts();
+  uCnt++;if(uCnt>=6){uCnt=0;updateUI()}
+  sCnt++;if(sCnt>=60){sCnt=0;renderStore()}
+  if(uCnt===0&&Math.random()<.3)checkAch();
+  requestAnimationFrame(loop);
+}
+
+// ====== SAVE/LOAD ======
+function buildSave(){return{sv:SV,clout:S.clout,td:S.totalClout,tc:S.tc,cp:S.cp,dep:{...S.dep},pu:[...S.pu],angels:S.angels,tae:S.tae,snd:S.snd,ua:[...S.ua],apu:[...S.apu],ba:S.buyAmt,vc:S.vc,ec:S.ec,ls:Date.now()}}
+function applySave(d){if(!d)return;S.clout=d.clout??0;S.totalClout=d.td??0;S.tc=d.tc??0;S.cp=d.cp??1;S.dep=d.dep??{};S.pu=d.pu??[];S.angels=d.angels??0;S.tae=d.tae??0;S.snd=d.snd??true;S.ua=d.ua??[];S.apu=d.apu??[];S.buyAmt=d.ba??1;S.vc=d.vc??0;S.ec=d.ec??0;S._ls=d.ls||0}
+async function saveGame(){try{localStorage.setItem('meme_factory_v1',JSON.stringify(buildSave()));showToast('Saved!','success')}catch(e){}}
+async function loadGame(){try{const r=localStorage.getItem('meme_factory_v1');if(r)applySave(JSON.parse(r))}catch(e){}}
+let asT=null;
+function startAutoSave(){if(asT)clearInterval(asT);asT=setInterval(saveGame,ASAV)}
+
+// ====== EVENTS ======
+function setupEvents(){
+  document.getElementById('meme-btn').addEventListener('click',handleClick);
+  document.getElementById('meme-btn').addEventListener('mousedown',e=>e.preventDefault());
+  document.getElementById('btn-play').addEventListener('click',()=>{
+    document.getElementById('splash').classList.add('hidden');
+    document.getElementById('game').classList.remove('hidden');
+    renderStore();updateUI();spawnEmojiBG();
+    S.nextEvent=Date.now()+(20+Math.random()*30)*1000;
+    setTimeout(spawnViral,30000+Math.random()*30000);
+  });
+  document.getElementById('btn-save').addEventListener('click',saveGame);
+  document.getElementById('viral-cookie').addEventListener('click',clickViral);
+  document.querySelectorAll('.tab-btn').forEach(tb=>tb.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));tb.classList.add('active');aTab=tb.dataset.tab;renderStore();
+  }));
+  document.querySelectorAll('.buy-amt-btn').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.buy-amt-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');S.buyAmt=parseInt(b.dataset.amt);renderStore();
+  }));
+  document.getElementById('btn-mobile-store').addEventListener('click',()=>document.getElementById('store').classList.toggle('mobile-open'));
+  function togDD(id){const m=document.getElementById(id),o=m.classList.contains('open');document.querySelectorAll('.dropdown-menu').forEach(x=>x.classList.remove('open'));if(!o)m.classList.add('open')}
+  document.getElementById('btn-settings').addEventListener('click',e=>{e.stopPropagation();togDD('settings-menu')});
+  document.addEventListener('click',()=>document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('open')));
+  rebuildSettings();
+  document.getElementById('btn-prestige').addEventListener('click',doPrestige);
+  document.addEventListener('keydown',e=>{if(e.key==='s'&&!e.ctrlKey&&!e.metaKey&&document.activeElement.tagName!=='INPUT')saveGame()});
+}
+function rebuildSettings(){
+  const m=document.getElementById('settings-menu');
+  m.innerHTML='<button id="btn-sound">'+(S.snd?'<i class="fa-solid fa-volume-high"></i>':'<i class="fa-solid fa-volume-xmark"></i>')+' Sound: '+(S.snd?'On':'Off')+'</button><button id="btn-fullscreen"><i class="fa-solid fa-expand"></i> Fullscreen</button><button id="btn-prestige-opt"><i class="fa-solid fa-rotate"></i> New Account</button><button id="btn-wipe"><i class="fa-solid fa-trash"></i> Wipe Save</button>';
+  document.getElementById('btn-sound').addEventListener('click',()=>{S.snd=!S.snd;rebuildSettings();document.getElementById('settings-menu').classList.remove('open')});
+  document.getElementById('btn-fullscreen').addEventListener('click',()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});else document.exitFullscreen().catch(()=>{});document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('open'))});
+  document.getElementById('btn-prestige-opt').addEventListener('click',()=>{
+    const menu=document.getElementById('settings-menu');const na=gAP()-S.tae;
+    if(na<=0){menu.innerHTML='<div class="reset-confirm"><p>Need at least '+fmt(1e6)+' total clout. Currently: '+fmt(S.totalClout)+'.</p><div class="btn-row"><button class="confirm-no" id="rc">OK</button></div></div>';document.getElementById('rc').addEventListener('click',()=>{rebuildSettings();menu.classList.remove('open')})}
+    else{menu.innerHTML='<div class="reset-confirm"><p>New account? Earn <strong style="color:var(--angel)">'+na+' Clout Angels</strong> (+'+(na*AM*100).toFixed(0)+'% bonus).</p><div class="btn-row"><button class="confirm-no" id="rc">Cancel</button><button class="confirm-yes" id="ry">New Account</button></div></div>';document.getElementById('rc').addEventListener('click',()=>{rebuildSettings();menu.classList.remove('open')});document.getElementById('ry').addEventListener('click',()=>{menu.classList.remove('open');rebuildSettings();startPrestige()})}
+  });
+  document.getElementById('btn-wipe').addEventListener('click',()=>{
+    const menu=document.getElementById('settings-menu');
+    menu.innerHTML='<div class="reset-confirm"><p>Delete ALL save data?</p><div class="btn-row"><button class="confirm-no" id="rc">Cancel</button><button class="confirm-yes" id="ry">Delete</button></div></div>';document.getElementById('rc').addEventListener('click',()=>{rebuildSettings();menu.classList.remove('open')});document.getElementById('ry').addEventListener('click',()=>{localStorage.removeItem('meme_factory_v1');location.reload()})
+  });
+}
+
+// ====== INIT ======
+async function init(){
+  await loadGame();
+  const off=calcOffline();
+  if(off>0){S.clout+=off;S.totalClout+=off;const away=S._ls?Math.round((Date.now()-S._ls)/1000):0;const hrs=Math.floor(away/3600);const mins=Math.floor((away%3600)/60);const t=hrs>0?hrs+'h '+mins+'m':mins+'m';setTimeout(()=>showToast('Welcome back! +'+fmt(off)+' clout over '+t+' (30%)','success'),500)}
+  S._ls=Date.now();
+  setupEvents();
+  if(S.totalClout>0||Object.keys(S.dep).length>0){document.getElementById('splash').classList.add('hidden');document.getElementById('game').classList.remove('hidden');spawnEmojiBG();S.nextEvent=Date.now()+(20+Math.random()*30)*1000;setTimeout(spawnViral,20000+Math.random()*20000)}
+  renderStore();updateUI();if(!S.snd)rebuildSettings();
+  document.querySelectorAll('.buy-amt-btn').forEach(b=>{b.classList.toggle('active',parseInt(b.dataset.amt)===S.buyAmt)});
+  updateTicker();setInterval(updateTicker,15000);
+  startAutoSave();requestAnimationFrame(loop);
+  window.addEventListener('beforeunload',()=>{try{localStorage.setItem('meme_factory_v1',JSON.stringify(buildSave()))}catch(e){}});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)try{localStorage.setItem('meme_factory_v1',JSON.stringify(buildSave()))}catch(e){}});
+}
+init();
+</script></body></html'+b.label+' (x'+b.mult+')</div>';
+  }
+  bar.innerHTML=h;
+}
+
+// ====== TICKER ======
+let tIdx=0;
+function updateTicker(){const el=document.getElementById('ticker-scroll');el.textContent=HEADS[tIdx%HEADS.length];el.style.animation='none';void el.offsetWidth;el.style.animation='tickMove 25s linear infinite';tIdx++}
+
+// ====== OFFLINE ======
+function calcOffline(){
+  const away=S._ls?((Date.now()-S._ls)/1000):0;
+  if(away<10)return 0;
+  const elapsed=Math.min(away,86400);
+  const cps=getCPS();
+  if(cps<=0)return 0;
+  return cps*elapsed*0.3;
+}
+
+// ====== GAME LOOP ======
+let lastT=performance.now();
+function loop(now){
+  const dt=(now-lastT)/1000;lastT=now;
+  const cps=getCPS();
+  if(cps>0){S.clout+=cps*dt;S.totalClout+=cps*dt}
+  // Event scheduling
+  if(!S.activeEvent&&Date.now()>=S.nextEvent&&S.nextEvent>0){triggerEvent();S.nextEvent=Date.now()+(40+Math.random()*50)*1000}
+  renderPts();
+  uCnt++;if(uCnt>=6){uCnt=0;updateUI()}
+  sCnt++;if(sCnt>=60){sCnt=0;renderStore()}
+  if(uCnt===0&&Math.random()<.3)checkAch();
+  requestAnimationFrame(loop);
+}
+
+// ====== SAVE/LOAD ======
+function buildSave(){return{sv:SV,clout:S.clout,td:S.totalClout,tc:S.tc,cp:S.cp,dep:{...S.dep},pu:[...S.pu],angels:S.angels,tae:S.tae,snd:S.snd,ua:[...S.ua],apu:[...S.apu],ba:S.buyAmt,vc:S.vc,ec:S.ec,ls:Date.now()}}
+function applySave(d){if(!d)return;S.clout=d.clout??0;S.totalClout=d.td??0;S.tc=d.tc??0;S.cp=d.cp??1;S.dep=d.dep??{};S.pu=d.pu??[];S.angels=d.angels??0;S.tae=d.tae??0;S.snd=d.snd??true;S.ua=d.ua??[];S.apu=d.apu??[];S.buyAmt=d.ba??1;S.vc=d.vc??0;S.ec=d.ec??0;S._ls=d.ls||0}
+async function saveGame(){try{localStorage.setItem('meme_factory_v1',JSON.stringify(buildSave()));showToast('Saved!','success')}catch(e){}}
+async function loadGame(){try{const r=localStorage.getItem('meme_factory_v1');if(r)applySave(JSON.parse(r))}catch(e){}}
+let asT=null;
+function startAutoSave(){if(asT)clearInterval(asT);asT=setInterval(saveGame,ASAV)}
+
+// ====== EVENTS ======
+function setupEvents(){
+  document.getElementById('meme-btn').addEventListener('click',handleClick);
+  document.getElementById('meme-btn').addEventListener('mousedown',e=>e.preventDefault());
+  document.getElementById('btn-play').addEventListener('click',()=>{
+    document.getElementById('splash').classList.add('hidden');
+    document.getElementById('game').classList.remove('hidden');
+    renderStore();updateUI();spawnEmojiBG();
+    S.nextEvent=Date.now()+(20+Math.random()*30)*1000;
+    setTimeout(spawnViral,30000+Math.random()*30000);
+  });
+  document.getElementById('btn-save').addEventListener('click',saveGame);
+  document.getElementById('viral-cookie').addEventListener('click',clickViral);
+  document.querySelectorAll('.tab-btn').forEach(tb=>tb.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));tb.classList.add('active');aTab=tb.dataset.tab;renderStore();
+  }));
+  document.querySelectorAll('.buy-amt-btn').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.buy-amt-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');S.buyAmt=parseInt(b.dataset.amt);renderStore();
+  }));
+  document.getElementById('btn-mobile-store').addEventListener('click',()=>document.getElementById('store').classList.toggle('mobile-open'));
+  function togDD(id){const m=document.getElementById(id),o=m.classList.contains('open');document.querySelectorAll('.dropdown-menu').forEach(x=>x.classList.remove('open'));if(!o)m.classList.add('open')}
+  document.getElementById('btn-settings').addEventListener('click',e=>{e.stopPropagation();togDD('settings-menu')});
+  document.addEventListener('click',()=>document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('open')));
+  rebuildSettings();
+  document.getElementById('btn-prestige').addEventListener('click',doPrestige);
+  document.addEventListener('keydown',e=>{if(e.key==='s'&&!e.ctrlKey&&!e.metaKey&&document.activeElement.tagName!=='INPUT')saveGame()});
+}
+function rebuildSettings(){
+  const m=document.getElementById('settings-menu');
+  m.innerHTML='<button id="btn-sound">'+(S.snd?'<i class="fa-solid fa-volume-high"></i>':'<i class="fa-solid fa-volume-xmark"></i>')+' Sound: '+(S.snd?'On':'Off')+'</button><button id="btn-fullscreen"><i class="fa-solid fa-expand"></i> Fullscreen</button><button id="btn-prestige-opt"><i class="fa-solid fa-rotate"></i> New Account</button><button id="btn-wipe"><i class="fa-solid fa-trash"></i> Wipe Save</button>';
+  document.getElementById('btn-sound').addEventListener('click',()=>{S.snd=!S.snd;rebuildSettings();document.getElementById('settings-menu').classList.remove('open')});
+  document.getElementById('btn-fullscreen').addEventListener('click',()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});else document.exitFullscreen().catch(()=>{});document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('open'))});
+  document.getElementById('btn-prestige-opt').addEventListener('click',()=>{
+    const menu=document.getElementById('settings-menu');const na=gAP()-S.tae;
+    if(na<=0){menu.innerHTML='<div class="reset-confirm"><p>Need at least '+fmt(1e6)+' total clout. Currently: '+fmt(S.totalClout)+'.</p><div class="btn-row"><button class="confirm-no" id="rc">OK</button></div></div>';document.getElementById('rc').addEventListener('click',()=>{rebuildSettings();menu.classList.remove('open')})}
+    else{menu.innerHTML='<div class="reset-confirm"><p>New account? Earn <strong style="color:var(--angel)">'+na+' Clout Angels</strong> (+'+(na*AM*100).toFixed(0)+'% bonus).</p><div class="btn-row"><button class="confirm-no" id="rc">Cancel</button><button class="confirm-yes" id="ry">New Account</button></div></div>';document.getElementById('rc').addEventListener('click',()=>{rebuildSettings();menu.classList.remove('open')});document.getElementById('ry').addEventListener('click',()=>{menu.classList.remove('open');rebuildSettings();startPrestige()})}
+  });
+  document.getElementById('btn-wipe').addEventListener('click',()=>{
+    const menu=document.getElementById('settings-menu');
+    menu.innerHTML='<div class="reset-confirm"><p>Delete ALL save data?</p><div class="btn-row"><button class="confirm-no" id="rc">Cancel</button><button class="confirm-yes" id="ry">Delete</button></div></div>';document.getElementById('rc').addEventListener('click',()=>{rebuildSettings();menu.classList.remove('open')});document.getElementById('ry').addEventListener('click',()=>{localStorage.removeItem('meme_factory_v1');location.reload()})
+  });
+}
+
+// ====== INIT ======
+async function init(){
+  await loadGame();
+  const off=calcOffline();
+  if(off>0){S.clout+=off;S.totalClout+=off;const away=S._ls?Math.round((Date.now()-S._ls)/1000):0;const hrs=Math.floor(away/3600);const mins=Math.floor((away%3600)/60);const t=hrs>0?hrs+'h '+mins+'m':mins+'m';setTimeout(()=>showToast('Welcome back! +'+fmt(off)+' clout over '+t+' (30%)','success'),500)}
+  S._ls=Date.now();
+  setupEvents();
+  if(S.totalClout>0||Object.keys(S.dep).length>0){document.getElementById('splash').classList.add('hidden');document.getElementById('game').classList.remove('hidden');spawnEmojiBG();S.nextEvent=Date.now()+(20+Math.random()*30)*1000;setTimeout(spawnViral,20000+Math.random()*20000)}
+  renderStore();updateUI();if(!S.snd)rebuildSettings();
+  document.querySelectorAll('.buy-amt-btn').forEach(b=>{b.classList.toggle('active',parseInt(b.dataset.amt)===S.buyAmt)});
+  updateTicker();setInterval(updateTicker,15000);
+  startAutoSave();requestAnimationFrame(loop);
+  window.addEventListener('beforeunload',()=>{try{localStorage.setItem('meme_factory_v1',JSON.stringify(buildSave()))}catch(e){}});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)try{localStorage.setItem('meme_factory_v1',JSON.stringify(buildSave()))}catch(e){}});
+}
+init();
+</script></body></html>
